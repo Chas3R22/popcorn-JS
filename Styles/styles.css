@@ -1,0 +1,27 @@
+body {
+    text-align: center;
+    background-color: #0e0e0e;
+}
+
+#game-field {
+    background-color: #000000;
+    border: 3px solid cyan;
+}
+
+#side-bar {
+    width: 250px;
+    height: 615px;
+    margin-right: 100px;
+    margin-left: -100px;
+    float: right;
+    background-color: black;
+    border: 3px solid cyan;
+    color: cyan;
+}
+
+#side-bar span {
+    display: block;
+    padding: 65px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 22pt;
+}
