@@ -58,6 +58,7 @@ let blockOriginY = 15;
 let score = 0;
 let lives = 3;
 let gameOver = false;
+let gameWon = false;
 
 // Maps
 
@@ -76,43 +77,45 @@ const level1 = [
     [0,0,1,1,1,1,1,1,1,],
 ]
 
+const level2 = [
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+    [0,0,1,1,2,2,1,1,2,2],
+]
+
+const level3 = [
+    [0,0,0,0,2,2,2,2,2,2],
+    [0,0,0,2,1,2,2,2,2,2,2],
+    [0,0,2,1,4,3,3,2],
+    [0,2,2,1,4,4,3,3,2,2,2,2,2],
+    [2,2,2,1,4,3,3,2,2],
+    [2,2,2,2,1,2,2,2,2,2,2,2,2,2],
+    [2,2,2,2,1,2,2,2,2,2,2,2,2,2],
+    [2,2,2,1,4,3,3,2,2],
+    [0,2,2,1,4,4,3,3,2,2,2,2,2],
+    [0,0,2,1,4,3,3,2],
+    [0,0,0,2,1,2,2,2,2,2,2],
+    [0,0,0,0,2,2,2,2,2,2],
+]
+
+let currentLevel = level1;
+
 // Sounds
 
-const blockCollisionSound = new Audio();
-const playerCollisionSound = new Audio();
-const terrainCollisionSound = new Audio();
-const loseLifeSound = new Audio();
-const gameOverSound = new Audio();
-const winSound = new Audio();
+const eventSound = new Audio();
 
-function playPlayerCollisionSound() {
-    playerCollisionSound.src = 'Sounds/key-set.wav';
-    playerCollisionSound.autoplay = true;
-}
-
-function playTerrainCollisionSound() {
-    blockCollisionSound.src = 'Sounds/key-select.wav';
-    blockCollisionSound.autoplay = true;
-}
-
-function playBlockCollisionSound() {
-    blockCollisionSound.src = 'Sounds/back-light-on.wav';
-    blockCollisionSound.autoplay = true;
-}
-
-function playLoseLifeSound() {
-    blockCollisionSound.src = 'Sounds/quit-accept.wav';
-    blockCollisionSound.autoplay = true;
-}
-
-function playGameOverSound() {
-    blockCollisionSound.src = 'Sounds/option-selectchapter.wav';
-    blockCollisionSound.autoplay = true;
-}
-
-function playWinSound() {
-    blockCollisionSound.src = 'Sounds/checkpoint-demon.wav';
-    blockCollisionSound.autoplay = true;
+function playSound(condition) {
+    eventSound.src = `Sounds/${condition}.wav`;
+    eventSound.autoplay = true;
 }
 
 // Initial draws
@@ -125,7 +128,7 @@ window.onload = () => {
 
     drawInitialFigures();
 
-    layoutBuilder(level1);
+    layoutBuilder(currentLevel);
     setTimeout(() => requestAnimationFrame(update), 3000);
 }
 
@@ -135,7 +138,7 @@ function update() {
     context.clearRect(0, 0, field.width, field.height);
 
     if(lives <= 0) {
-        playGameOverSound();
+        playSound("loseLife");
         context.font = "20px sans-serif";
         context.fillStyle = "cyan";
         context.fillText("Game over! Press the spacebar button to replay.", 70, 500);
@@ -144,15 +147,13 @@ function update() {
     }
 
     if(blockCount <= 0) {
-        playWinSound();
+        playSound("victory");
         context.font = "20px sans-serif";
         context.fillStyle = "cyan";
-        context.fillText("You win! Press the spacebar button to replay.", 80, 500);
-        gameOver = true;
+        context.fillText("You win! Press the spacebar button to play the next level.", 30, 500);
+        gameWon = true;
         return;
     }
-
-    //context.clearRect(0, 0, field.width, field.height);
 
     context.fillStyle = player.color;
     context.fillRect(player.x, player.y, player.width, player.height);
@@ -167,12 +168,12 @@ function update() {
 
     if(ball.y <= 0) {
         ball.yVelocity *= -1;
-        playTerrainCollisionSound();
+        playSound("terrainCollision");
     } else if(ball.x <= 0 || (ball.x + ball.width) >= fieldWidth) {
         ball.xVelocity *= -1;
-        playTerrainCollisionSound();
+        playSound("terrainCollision");
     } else if(ball.y + ball.height >= fieldHeight) {
-        playLoseLifeSound();
+        playSound("loseLife");
         lives--;
         ball.x = fieldWidth/2;
         ball.y = fieldHeight/1.5;
@@ -183,23 +184,23 @@ function update() {
 
     if(collisionTop(ball, player) || collisionBottom(ball, player)) {
         ball.yVelocity *= -1;
-        playPlayerCollisionSound();
+        playSound("playerCollision");
     } else if(collisionRight(ball, player) || collisionLeft(ball, player)) {
         ball.xVelocity *= -1;
-        playPlayerCollisionSound();
+        playSound("playerCollision");
     }
 
     for(let i = 0; i < blockArray.length; i++) {
         let block = blockArray[i];
         if(block.health > 0) {
             if(collisionTop(ball, block) || collisionBottom(ball, block)) {
-                playBlockCollisionSound();
+                playSound("blockCollision");
                 block.health -= 1;
                 ball.yVelocity *= -1;
                 score += 100;
                 statDisplay(score, lives);
             } else if(collisionLeft(ball, block) || collisionRight(ball, block)) {
-                playBlockCollisionSound();
+                playSound("blockCollision");
                 block.health -= 1;
                 ball.yVelocity *= -1;                
                 score += 100;
@@ -225,7 +226,15 @@ function outOfBoundsCheck(position) {
 function updatePlayerPosition(keyPress) {
     if(gameOver) {
         if(keyPress.code == "Space") {
-            reloadGame();
+            score = 0;
+            currentLevel = level1;
+            reloadGame(currentLevel);
+        }
+    }
+    if(gameWon) {
+        if(keyPress.code == "Space") {
+            changeLevel();
+            reloadGame(currentLevel);
         }
     }
 
@@ -274,7 +283,7 @@ function layoutBuilder(level) {
                 health : 0,
                 color : "black"
             }
-            switch(level1[c][r]) {
+            switch(level[c][r]) {
                 case 0: 
                     block.health = 0;
                     block.color = "black";
@@ -317,9 +326,10 @@ function statDisplay(score, lives) {
     scoreField.innerHTML = `Score: ${score}`;
 }
 
-function reloadGame() {
+function reloadGame(level) {
     context.clearRect(0, 0, field.width, field.height);
     gameOver = false;
+    gameWon = false;
     
     player = {
         x : fieldWidth/2 - playerWidth/2,
@@ -343,10 +353,10 @@ function reloadGame() {
 
     blockCount = 0;
     blockArray = [];
-    score = 0;
+    //score = 0;
     lives = 3;
 
-    layoutBuilder(level1);
+    layoutBuilder(level);
     statDisplay(score, lives);
     drawInitialFigures();
 
@@ -366,4 +376,14 @@ function drawInitialFigures() {
     context.beginPath();
     context.roundRect(ball.x, ball.y, ball.width, ball.height, ball.radii);
     context.fill();
+}
+
+function changeLevel() {
+    if(currentLevel === level1) {
+        currentLevel = level2;
+    } else if(currentLevel === level2) {
+        currentLevel = level3;
+    } else if(currentLevel === level3) {
+        currentLevel = level1;
+    }
 }
